@@ -8,6 +8,7 @@ public class MazeGeneratorScript : MonoBehaviour
     [SerializeField] GameObject border;
     [SerializeField] GameObject puckleDible;
     [SerializeField] GameObject puckle;
+    [SerializeField] GameObject powerPellet;
     [SerializeField] Vector2 mazeDimensions;
     [SerializeField] Vector2 startPosition;
     List<List<GameObject>> maze;
@@ -45,6 +46,7 @@ public class MazeGeneratorScript : MonoBehaviour
     void FillMaze()
     {
         List<List<RecursiveBackTracking.TypesOfSpaces>> map = RecursiveBackTracking.map;
+        Debug.Log(map[0][0]);
         
         for(int x = 0; x < map.Count; x++)
         {
@@ -58,6 +60,10 @@ public class MazeGeneratorScript : MonoBehaviour
                 else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.PuckleDibble)
                 {
                     maze[x].Add(Instantiate(puckleDible, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
+                }
+                else if(map[x][y] == RecursiveBackTracking.TypesOfSpaces.PowerPellet)
+                {
+                    maze[x].Add(Instantiate(powerPellet, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
                 }
                 else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.Unknown)
                 {
