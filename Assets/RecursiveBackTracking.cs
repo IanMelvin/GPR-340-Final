@@ -12,7 +12,7 @@ static public class RecursiveBackTracking
     static bool placeSecondWarpTunnel = false;
     static int warpTunnelRange = 0; //Determines how many spaces in line with the warp tunnel should be empty 
     static List<int> warpTunnels = new List<int>(); //stores the y value of warp tunnels
-    static List<Vector2> wtBorderThickness = new List<Vector2>(); //stores the values representing how the border shifts near the Warp Tunnel(s)
+    static List<Vector3> wtBorderThickness = new List<Vector3>(); //stores the values representing how the border shifts near the Warp Tunnel(s)
     
     public enum TypesOfSpaces{
         Empty = 0,
@@ -67,9 +67,13 @@ static public class RecursiveBackTracking
                     break;
             }
         }
-        else if(IsInWarpTunnelRange(current, dimensions))
+        else if(IsInWarpTunnelXRange(current, dimensions))
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Empty;
+        }
+        else if(IsInWarpTunnelBorderRange(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
         }
         else
         {
@@ -109,7 +113,7 @@ static public class RecursiveBackTracking
 
         ResetToDefaults(dimensions);
         PlaceWarpTunnels(dimensions);
-        CalcWarpTunnelValues(dimensions);
+        CalcWarpTunnelValues();
     }
 
     static void ResetToDefaults(Vector2 dimensions)
@@ -146,7 +150,7 @@ static public class RecursiveBackTracking
         }
 
         int random1 = Random.Range(5, (int)dimensions.y / 2 - 1);
-        int random2 = Random.Range((int)dimensions.y / 2 - 1, (int)dimensions.y - 1);
+        int random2 = Random.Range((int)dimensions.y / 2 - 1, (int)dimensions.y - 5);
 
         map[0][random1] = TypesOfSpaces.WarpTunnel;
         warpTunnels.Add(random1);
@@ -158,13 +162,28 @@ static public class RecursiveBackTracking
         }
     }
 
-    //Working on how to handle the border changes near warp tunnels
-    static void CalcWarpTunnelValues(Vector2 dimensions)
+    static void CalcWarpTunnelValues()
     {
         warpTunnelRange = Random.Range(1, 5);
-        wtBorderThickness.Add(new Vector2(warpTunnelRange, Random.Range(2, 5)));
-        wtBorderThickness.Add(new Vector2(warpTunnelRange, Random.Range(2, 5)));
         //Debug.Log(warpTunnelRange);
+
+        for (int i = 0; i < warpTunnels.Count; i++)
+        {
+            int rand = Random.Range(1, 5);
+            wtBorderThickness.Add(new Vector3(warpTunnelRange, rand, rand));
+        }
+
+        if(placeSecondWarpTunnel)
+        {
+            if (Mathf.Abs((warpTunnels[0] + wtBorderThickness[0].z) - (warpTunnels[1] - wtBorderThickness[1].z)) <= 2)
+            {
+                // Math to calculate above bool
+                // y1 = 5, y2 = 12, rand1 = 2, rand2 = 3
+                // y1 + rand1 = 7, y2 - rand2 = 9
+                // if(Mathf.Abs((y1 + rand1) - (y2 - rand2)) <= 2)
+                wtBorderThickness[0] = new Vector3(wtBorderThickness[0].x, wtBorderThickness[0].y, wtBorderThickness[0].z + 2);
+            }
+        }
     }
 
     static public void Fold(Vector2 dimensions)
@@ -293,7 +312,7 @@ static public class RecursiveBackTracking
         return false;
     }
 
-    static bool IsInWarpTunnelRange(Vector2 point, Vector2 dimensions)
+    static bool IsInWarpTunnelXRange(Vector2 point, Vector2 dimensions)
     {
         foreach(var warpTunnel in warpTunnels)
         {
@@ -303,6 +322,31 @@ static public class RecursiveBackTracking
             }
         }
         
+        return false;
+    }
+
+    static bool IsInWarpTunnelBorderRange(Vector2 point, Vector2 dimensions)
+    {
+        bool yRange = point.y > 3 && point.y <= dimensions.y - 5;
+        
+        if (point.x <= warpTunnelRange && yRange)
+        {
+            for (int i = 0; i < warpTunnels.Count; i++)
+            {
+                bool yRangeWT = Mathf.Abs(point.y - warpTunnels[i]) <= wtBorderThickness[i].y;
+                if (yRangeWT)
+                {
+                    return true;
+                }
+
+                yRangeWT = Mathf.Abs(point.y - warpTunnels[i]) <= wtBorderThickness[i].z;
+                if (point.y > warpTunnels[i] && yRangeWT)
+                {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 }
