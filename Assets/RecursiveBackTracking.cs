@@ -48,8 +48,9 @@ static public class RecursiveBackTracking
         stack.RemoveAt(stack.Count - 1);
 
         List<Vector2> visitables = GetVisitables(current, dimensions);
-        
-        if(visitables.Count <= 0)
+
+
+        if (visitables.Count <= 0)
         {
             return true;
         }
@@ -94,19 +95,27 @@ static public class RecursiveBackTracking
     {
         List<Vector2> list = new List<Vector2>();
         //Debug.Log(point);
+
+        //North
         if (point.x < dimensions.x / 2 && point.y - 1 < dimensions.y && point.y - 1 >= 0 && map[(int)point.x][(int)point.y - 1] == TypesOfSpaces.Unknown)
         {
             list.Add(new Vector2(point.x, point.y - 1));
         }
-        else if(point.x - 1 < dimensions.x / 2 && point.x - 1 >= 0 && point.y < dimensions.y && map[(int)point.x - 1][(int)point.y] == TypesOfSpaces.Unknown)
+
+        //west
+        if (point.x - 1 < dimensions.x / 2 && point.x - 1 >= 0 && point.y < dimensions.y && map[(int)point.x - 1][(int)point.y] == TypesOfSpaces.Unknown)
         {
             list.Add(new Vector2(point.x - 1, point.y));
         }
-        else if(point.x + 1 < dimensions.x / 2 && point.x >= 0 && point.y < dimensions.y && map[(int)point.x + 1][(int)point.y] == TypesOfSpaces.Unknown)
+
+        //east
+        if (point.x + 1 < dimensions.x / 2 && point.x >= 0 && point.y < dimensions.y && map[(int)point.x + 1][(int)point.y] == TypesOfSpaces.Unknown)
         {
             list.Add(new Vector2(point.x + 1, point.y));
         }
-        else if(point.x < dimensions.x / 2 && point.y + 1 < dimensions.y && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] == TypesOfSpaces.Unknown)
+
+        //south
+        if (point.x < dimensions.x / 2 && point.y + 1 < dimensions.y && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] == TypesOfSpaces.Unknown)
         {
             list.Add(new Vector2(point.x, point.y + 1));
         }

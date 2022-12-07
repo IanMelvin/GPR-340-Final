@@ -55,9 +55,15 @@ public class MazeGeneratorScript : MonoBehaviour
                 {
                     maze[x].Add(Instantiate(border, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
                 }
-                else if ((map[x][y] == RecursiveBackTracking.TypesOfSpaces.PuckleDibble))
+                else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.PuckleDibble)
                 {
                     maze[x].Add(Instantiate(puckleDible, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
+                }
+                else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.Unknown)
+                {
+                    GameObject obj = Instantiate(border, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity);
+                    obj.GetComponent<SpriteRenderer>().color = Color.white;
+                    maze[x].Add(obj);
                 }
             }
         }
