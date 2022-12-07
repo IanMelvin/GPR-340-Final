@@ -1233,6 +1233,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   border: {fileID: 541203743509522482, guid: 908a30f31662e2147937f7991d184140, type: 3}
+  puckleDible: {fileID: 8315147577367671299, guid: 572283bf5c3a2e947985ab7fcb3aae7e, type: 3}
+  puckle: {fileID: 3647834983521847569, guid: 2335ed3c55e4c224b947528ccc632efc, type: 3}
   mazeDimensions: {x: 28, y: 31}
   startPosition: {x: -7.5, y: -6}
 --- !u!1 &536488017
