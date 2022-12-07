@@ -141,7 +141,7 @@ static public class RecursiveBackTracking
         if (random == 0)
         {
             //Debug.Log("false");
-            placeSecondWarpTunnel = false;
+            placeSecondWarpTunnel = true;
         }
         else
         {
@@ -172,14 +172,14 @@ static public class RecursiveBackTracking
             int rand = Random.Range(1, 5);
             wtBorderThickness.Add(new Vector3(warpTunnelRange, rand, rand));
         }
-
+        
         if(placeSecondWarpTunnel)
         {
-            if (Mathf.Abs((warpTunnels[0] + wtBorderThickness[0].z) - (warpTunnels[1] - wtBorderThickness[1].z)) <= 2)
+            if (Mathf.Abs((warpTunnels[0] + wtBorderThickness[0].z) - (warpTunnels[1] - wtBorderThickness[1].z)) <= 3)
             {
                 // Math to calculate above bool
-                // y1 = 5, y2 = 12, rand1 = 2, rand2 = 3
-                // y1 + rand1 = 7, y2 - rand2 = 9
+                // y1 = 10, y2 = 17, rand1 = 2, rand2 = 2
+                // y1 + rand1 = 12, y2 - rand2 = 15
                 // if(Mathf.Abs((y1 + rand1) - (y2 - rand2)) <= 2)
                 wtBorderThickness[0] = new Vector3(wtBorderThickness[0].x, wtBorderThickness[0].y, wtBorderThickness[0].z + 2);
             }

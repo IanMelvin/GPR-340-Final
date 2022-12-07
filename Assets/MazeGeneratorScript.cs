@@ -50,7 +50,7 @@ public class MazeGeneratorScript : MonoBehaviour
     {
         List<List<RecursiveBackTracking.TypesOfSpaces>> map = RecursiveBackTracking.map;
         List<Vector2> warpTunnelLocs = new List<Vector2>();
-        Debug.Log(map[0][0]);
+        //Debug.Log(map[0][0]);
         
         for(int x = 0; x < map.Count; x++)
         {
