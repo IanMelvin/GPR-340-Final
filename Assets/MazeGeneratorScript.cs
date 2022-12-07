@@ -9,6 +9,7 @@ public class MazeGeneratorScript : MonoBehaviour
     [SerializeField] GameObject puckleDible;
     [SerializeField] GameObject puckle;
     [SerializeField] GameObject powerPellet;
+    [SerializeField] GameObject warpTunnel;
     [SerializeField] Vector2 mazeDimensions;
     [SerializeField] Vector2 startPosition;
     List<List<GameObject>> maze;
@@ -30,6 +31,8 @@ public class MazeGeneratorScript : MonoBehaviour
         if(!genMaze && !mazeReady)
         {
             FillMaze();
+            Vector2 playerSpawn = RecursiveBackTracking.DeterminePlayerSpawn(mazeDimensions);
+            Instantiate(puckle, new Vector3(startPosition.x + 0.5f * playerSpawn.x + 0.25f, startPosition.y + 0.5f * playerSpawn.y, 0.0f), Quaternion.identity);
         }
     }
 
@@ -46,6 +49,7 @@ public class MazeGeneratorScript : MonoBehaviour
     void FillMaze()
     {
         List<List<RecursiveBackTracking.TypesOfSpaces>> map = RecursiveBackTracking.map;
+        List<Vector2> warpTunnelLocs = new List<Vector2>();
         Debug.Log(map[0][0]);
         
         for(int x = 0; x < map.Count; x++)
@@ -65,11 +69,37 @@ public class MazeGeneratorScript : MonoBehaviour
                 {
                     maze[x].Add(Instantiate(powerPellet, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
                 }
+                else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.WarpTunnel)
+                {
+                    maze[x].Add(Instantiate(warpTunnel, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
+                    warpTunnelLocs.Add(new Vector2(x,y));
+                }
                 else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.Unknown)
                 {
                     GameObject obj = Instantiate(border, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity);
                     obj.GetComponent<SpriteRenderer>().color = Color.white;
                     maze[x].Add(obj);
+                }
+            }
+        }
+
+        if(warpTunnelLocs.Count % 2 != 0)
+        {
+            Debug.Log("Error: Odd Number of Warp Tunnels");
+        }
+        else
+        {
+            for(int i = 0; i < warpTunnelLocs.Count; i++)
+            {
+                if (warpTunnelLocs[i].x == 0)
+                {
+                    maze[(int)warpTunnelLocs[i].x][(int)warpTunnelLocs[i].y].GetComponent<WarpTunnel>().SetPartner(maze[(int)mazeDimensions.x - 1][(int)warpTunnelLocs[i].y]);
+                    maze[(int)warpTunnelLocs[i].x][(int)warpTunnelLocs[i].y].GetComponent<WarpTunnel>().direction = -1;
+                }
+                else
+                {
+                    maze[(int)warpTunnelLocs[i].x][(int)warpTunnelLocs[i].y].GetComponent<WarpTunnel>().SetPartner(maze[0][(int)warpTunnelLocs[i].y]);
+                    maze[(int)warpTunnelLocs[i].x][(int)warpTunnelLocs[i].y].GetComponent<WarpTunnel>().direction = 1;
                 }
             }
         }

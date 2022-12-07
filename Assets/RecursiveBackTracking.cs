@@ -7,6 +7,12 @@ static public class RecursiveBackTracking
 {
     static List<Vector2> stack = new List<Vector2>();
     static public List<List<TypesOfSpaces>> map = new List<List<TypesOfSpaces>>();
+
+    //Warp Tunnel Values
+    static bool placeSecondWarpTunnel = false;
+    static int warpTunnelRange = 0; //Determines how many spaces in line with the warp tunnel should be empty 
+    static List<int> warpTunnels = new List<int>(); //stores the y value of warp tunnels
+    static List<Vector2> wtBorderThickness = new List<Vector2>(); //stores the values representing how the border shifts near the Warp Tunnel(s)
     
     public enum TypesOfSpaces{
         Empty = 0,
@@ -38,39 +44,32 @@ static public class RecursiveBackTracking
         if (stack.Count == 0)
         {
             stack.Add(StartPoint(dimensions));
-            //current = stack[stack.Count - 1];
             if (stack[0].x < 0) return false;
-
-            /*if (CheckIfMazeBorder(current, dimensions))
-            {
-                map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
-            }
-            else
-            {
-                map[(int)stack[0].x][(int)stack[0].y] = TypesOfSpaces.Empty;
-            }*/
-            
         }
-        //else
-        //{
-            current = stack[stack.Count - 1];
-            if (CheckIfMazeBorder(current, dimensions))
-            {
-                map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
-            }
-            else
-            {
-                //if (map[(int)current.x][(int)current.y] != TypesOfSpaces.Unknown) Debug.Log("Override");
-                //map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
-            }
+
+        current = stack[stack.Count - 1];
+        if (CheckIfMazeBorder(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
+        }
             
-        //}
         stack.RemoveAt(stack.Count - 1);
         List<Vector2> visitables = GetVisitables(current, dimensions);
 
-        if (isNeighborInEnemySpawn(visitables, dimensions))
+        if (IsNextToEnemySpawnRange(current, dimensions))
         {
-            map[(int)current.x][(int)current.y] = TypesOfSpaces.PowerPellet;
+            switch (Random.Range(0, 2)){
+                case 0:
+                    map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
+                    break;
+                case 1:
+                    map[(int)current.x][(int)current.y] = TypesOfSpaces.Empty;
+                    break;
+            }
+        }
+        else if(IsInWarpTunnelRange(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.Empty;
         }
         else
         {
@@ -108,13 +107,64 @@ static public class RecursiveBackTracking
             }
         }
 
+        ResetToDefaults(dimensions);
+        PlaceWarpTunnels(dimensions);
+        CalcWarpTunnelValues(dimensions);
+    }
+
+    static void ResetToDefaults(Vector2 dimensions)
+    {
         Vector2 PlayerSpawn = DeterminePlayerSpawn(dimensions);
         map[(int)PlayerSpawn.x][(int)PlayerSpawn.y] = TypesOfSpaces.Empty;
 
-        foreach(var point in DetermineEnemySpawnZone(dimensions))
+        foreach (var point in DetermineEnemySpawnZone(dimensions))
         {
-            map[(int)point.x][(int)point.y] = TypesOfSpaces.Empty;
+            if (IsEnemySpawnBox(point, dimensions))
+            {
+                //Debug.Log("here");
+                map[(int)point.x][(int)point.y] = TypesOfSpaces.Border;
+            }
+            else
+            {
+                map[(int)point.x][(int)point.y] = TypesOfSpaces.Empty;
+            }
         }
+    }
+
+    static void PlaceWarpTunnels(Vector2 dimensions)
+    {
+        int random = Random.Range(0, 4);
+        if (random == 0)
+        {
+            //Debug.Log("false");
+            placeSecondWarpTunnel = false;
+        }
+        else
+        {
+            //Debug.Log("true");
+            placeSecondWarpTunnel = true;
+        }
+
+        int random1 = Random.Range(5, (int)dimensions.y / 2 - 1);
+        int random2 = Random.Range((int)dimensions.y / 2 - 1, (int)dimensions.y - 1);
+
+        map[0][random1] = TypesOfSpaces.WarpTunnel;
+        warpTunnels.Add(random1);
+
+        if (placeSecondWarpTunnel)
+        {
+            map[0][random2] = TypesOfSpaces.WarpTunnel;
+            warpTunnels.Add(random2);
+        }
+    }
+
+    //Working on how to handle the border changes near warp tunnels
+    static void CalcWarpTunnelValues(Vector2 dimensions)
+    {
+        warpTunnelRange = Random.Range(1, 5);
+        wtBorderThickness.Add(new Vector2(warpTunnelRange, Random.Range(2, 5)));
+        wtBorderThickness.Add(new Vector2(warpTunnelRange, Random.Range(2, 5)));
+        //Debug.Log(warpTunnelRange);
     }
 
     static public void Fold(Vector2 dimensions)
@@ -200,30 +250,59 @@ static public class RecursiveBackTracking
         return list;
     }
 
+    static bool IsEnemySpawnBox(Vector2 point, Vector2 dimensions)
+    {
+        Vector3 enemySpawn = EnemySpawnDimensions(DeterminePlayerSpawn(dimensions));
+        int center = (int)enemySpawn.y + ((int)enemySpawn.z - (int)enemySpawn.y)/2;
+        //Debug.Log(center);
+        if(point.y == center + 1 && point.x == (int)dimensions.x / 2 - 1)
+        {
+            return false;
+        }
+        else if((point.y == center + 1 || point.y == center - 1) && point.x >= (int)dimensions.x/2 - 3)
+        {
+            return true;
+        }
+        else if(point.y == center && point.x == (int)dimensions.x / 2 - 3)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     static Vector3 EnemySpawnDimensions(Vector2 playerSpawn)
     {
-        int lowestPointY = (int)playerSpawn.y + 6;
-        int highestPointY = (int)playerSpawn.y + 13;
-        int lowestPointX = (int)playerSpawn.x - 4;
+        int lowestPointY = (int)playerSpawn.y + 7;
+        int highestPointY = (int)playerSpawn.y + 12;
+        int lowestPointX = (int)playerSpawn.x - 3;
 
         return new Vector3(lowestPointX, lowestPointY, highestPointY);
     }
 
-    //1 reason it's not working is the neighbors vector is not passing in any neighbors that in the enemy spawn range
-    //Don't make it dependent on the neightbors but instead the point itself
-    static bool isNeighborInEnemySpawn(List<Vector2> neighbors, Vector2 dimensions)
+    static bool IsNextToEnemySpawnRange(Vector2 point, Vector2 dimensions)
     {
         Vector3 enemySpawnRange = EnemySpawnDimensions(DeterminePlayerSpawn(dimensions));
 
-        foreach(var point in neighbors)
+        if (point.x >= enemySpawnRange.x - 1 && point.y >= enemySpawnRange.y - 1 && point.y <= enemySpawnRange.z)
         {
-            if (point.x >= enemySpawnRange.x && point.y >= enemySpawnRange.y && point.y <= enemySpawnRange.z)
+            //Debug.Log("true");
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool IsInWarpTunnelRange(Vector2 point, Vector2 dimensions)
+    {
+        foreach(var warpTunnel in warpTunnels)
+        {
+            if (point.y == warpTunnel && point.x <= warpTunnelRange)
             {
-                Debug.Log("true");
                 return true;
             }
         }
-
+        
         return false;
     }
 }

@@ -14,4 +14,9 @@ public class WarpTunnel : MonoBehaviour
             collision.transform.position = partnerWarpTunnel.transform.position + new Vector3(direction, 0.0f, 0.0f);
         }
     }
+
+    public void SetPartner(GameObject partner)
+    {
+        partnerWarpTunnel = partner;
+    }
 }
