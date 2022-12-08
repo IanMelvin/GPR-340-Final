@@ -75,12 +75,9 @@ static public class RecursiveBackTracking
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
         }
-        else
+        else if (map[(int)current.x][(int)current.y] == TypesOfSpaces.Unknown)
         {
-            if (map[(int)current.x][(int)current.y] == TypesOfSpaces.Unknown)
-            {
-                map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
-            }
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
         }
 
         if (visitables.Count <= 0)
