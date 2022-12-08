@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using Unity.VisualScripting;
 using UnityEngine;
 using static RecursiveBackTracking;
 
@@ -20,9 +17,8 @@ public class GhostScript : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         state.x = 0;
 
-        Vector2 playerMazePos = new Vector2(player.transform.position.x - mazeStartPosition.x, player.transform.position.y - mazeStartPosition.y) * 2;
-        Debug.Log("Player: " + playerMazePos);
-        Vector2 enemyMazePos = new Vector2(transform.position.x - mazeStartPosition.x, transform.position.y - mazeStartPosition.y) * 2;
+        PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2));
+        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2));
 
         AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
         PrintAStar(search, enemyMazePos, playerMazePos);
@@ -37,20 +33,29 @@ public class GhostScript : MonoBehaviour
         }*/
     }
 
-    //Need to figure out how to parce through AStar, currently the goal is not a valid input to the dictionary
-    //might have to rework some of the Astar foreach loop if it turns out to be the issue
-    void PrintAStar(AStarSearch search, Vector2 start, Vector2 goal)
+    void PrintAStar(AStarSearch search, PathNode start, PathNode goal)
     {
         Debug.Log(search.cameFrom.Count);
         foreach(var value in search.cameFrom)
         {
-            Debug.Log(value);
+            Debug.Log("(" + value.Key.x + ", " + value.Key.y + ") (" + value.Value.x + ", " + value.Value.y + ")");
         }
 
-        List<Vector2> Path = new List<Vector2>();
-        Vector2 next = goal;
-        Path.Add(goal);
-        while(true)
+        List<PathNode> Path = new List<PathNode>();
+        PathNode next = goal;
+        Path.Add(next);
+        if (!search.cameFrom.ContainsKey(goal))
+        {
+            Debug.Log("Error: goal is not a dictionary key");
+        }
+
+        if(!search.cameFrom.ContainsValue(goal))
+        {
+            Debug.Log("Error: goal is not a dictionary Value");
+        }
+
+        
+        /*while(true)
         {
             if ((int)search.cameFrom[next].x == (int)start.x && (int)search.cameFrom[next].y == (int)start.y)
             {
@@ -63,10 +68,8 @@ public class GhostScript : MonoBehaviour
 
         for(int i = 0; i < Path.Count; i++)
         {
-            Debug.Log(Path[i]);
-        }
-        
-        
+            Debug.Log(Path[i].x + ", " + Path[i].y);
+        }*/
     }
 }
 
@@ -153,55 +156,105 @@ public class PriorityQueue <P, T> where T : IComparable<T>
     }
 }
 
+public class PathNode
+{
+    private int X;
+    private int Y;
+
+    public PathNode(int x, int y)
+    {
+        this.X = x;
+        this.Y = y;
+    }
+
+    public int x
+    {
+        get { return X; }
+        set { X = value; }
+    }
+
+    public int y
+    {
+        get { return Y; }
+        set { Y = value; }
+    }
+
+    public static PathNode operator *(PathNode a, int b)
+    {
+        return new PathNode(a.x * b, a.y * b);
+    }
+
+    public static bool operator ==(PathNode a, PathNode b)
+    {
+        return a.x == b.x && a.y == b.y;
+    }
+
+    public static bool operator !=(PathNode a, PathNode b)
+    {
+        return a.x != b.x && a.y != b.y;
+    }
+
+    public override bool Equals(object o)
+    {  
+       return true;  
+    } 
+
+    public override int GetHashCode()
+    {
+        return x.GetHashCode() ^ (y.GetHashCode() << 2);
+    }
+
+}
+
 public class AStarSearch
 {
-    [SerializeField] public Dictionary<Vector2, Vector2> cameFrom = new Dictionary<Vector2, Vector2>();
-    [SerializeField] public Dictionary<Vector2, double> costSoFar = new Dictionary<Vector2, double>();
+    [SerializeField] public Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
+    [SerializeField] public Dictionary<PathNode, double> costSoFar = new Dictionary<PathNode, double>();
 
-    static public double Heuristic(Vector2 a, Vector2 b)
+    static public double Heuristic(PathNode a, PathNode b)
     {
         return Mathf.Abs(a.x-b.x) + Mathf.Abs(a.y-b.y);
     }
 
-    List<Vector2> GetNeighbors(Vector2 point, List<List<TypesOfSpaces>> map)
+    List<PathNode> GetNeighbors(PathNode point, List<List<TypesOfSpaces>> map)
     {
-        List<Vector2> neighbors = new List<Vector2>();
+        List<PathNode> neighbors = new List<PathNode>();
 
         //North
         if (point.x < map.Count && point.y - 1 < map[0].Count && point.y - 1 >= 0 && map[(int)point.x][(int)point.y - 1] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new Vector2(point.x, point.y - 1));
+            neighbors.Add(new PathNode(point.x, point.y - 1));
         }
 
         //West
         if (point.x - 1 < map.Count && point.x - 1 >= 0 && point.y < map[0].Count && map[(int)point.x - 1][(int)point.y] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new Vector2(point.x - 1, point.y));
+            neighbors.Add(new PathNode(point.x - 1, point.y));
         }
 
         //east
         if (point.x + 1 < map.Count && point.x >= 0 && point.y < map[0].Count && map[(int)point.x + 1][(int)point.y] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new Vector2(point.x + 1, point.y));
+            neighbors.Add(new PathNode(point.x + 1, point.y));
         }
 
         //south
         if (point.x < map.Count && point.y + 1 < map[0].Count && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new Vector2(point.x, point.y + 1));
+            neighbors.Add(new PathNode(point.x, point.y + 1));
         }
 
         return neighbors;
     }
 
-    double Cost(Vector2 a, Vector2 b, List<List<TypesOfSpaces>> map)
+    double Cost(PathNode a, PathNode b, List<List<TypesOfSpaces>> map)
     {
         return map[(int)b.x][(int)b.y] != TypesOfSpaces.Border ? 5 : 1;
     }
 
-    public AStarSearch(List<List<TypesOfSpaces>> map, Vector2 start, Vector2 goal)
+    public AStarSearch(List<List<TypesOfSpaces>> map, PathNode start, PathNode goal)
     {
-        var frontier = new PriorityQueue<Vector2, double>();
+        var frontier = new PriorityQueue<PathNode, double>();
         frontier.Enqueue(start,0);
         cameFrom[start] = start;
         costSoFar[start] = 0;
@@ -209,17 +262,17 @@ public class AStarSearch
         {
             var current = frontier.Dequeue();
             //Debug.Log("Current: " + current);
-            if((int)current.x == (int)goal.x && (int)current.y == (int)goal.y)
+            if(current == goal)
             {
                 Debug.Log("current: " + current + " goal: " + goal);
                 break;
             }
 
-            foreach (var next in GetNeighbors(current, map))
+            foreach (var next in GetNeighbors(current, map)) //New issue has 
             {
                 double newCost = costSoFar[current] + Cost(current, next, map);
 
-                if(!costSoFar.ContainsKey(next) || newCost < costSoFar[next]) //There might be an issue with this, as vector comparisons are funky
+                if(!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
                 {
                     costSoFar[next] = newCost;
                     double priority = newCost + Heuristic(next, goal);
