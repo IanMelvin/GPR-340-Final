@@ -9,6 +9,7 @@ public class MazeGeneratorScript : MonoBehaviour
     [SerializeField] GameObject puckle;
     [SerializeField] GameObject powerPellet;
     [SerializeField] GameObject warpTunnel;
+    [SerializeField] GameObject[] Ghosts;
     [SerializeField] Vector2 mazeDimensions;
     [SerializeField] Vector2 startPosition;
     List<List<GameObject>> maze;
@@ -31,13 +32,17 @@ public class MazeGeneratorScript : MonoBehaviour
         {
             FillMaze();
             Vector2 playerSpawn = RecursiveBackTracking.DeterminePlayerSpawn(mazeDimensions);
-            Instantiate(puckle, new Vector3(startPosition.x + 0.5f * playerSpawn.x + 0.25f, startPosition.y + 0.5f * playerSpawn.y, 0.0f), Quaternion.identity);
+            Instantiate(puckle, new Vector3(startPosition.x + 0.5f * playerSpawn.x, startPosition.y + 0.5f * playerSpawn.y, 0.0f), Quaternion.identity);
+
+            Vector2 enemySpawn = RecursiveBackTracking.DetermineCenterEnemySpawnZone(mazeDimensions);
+            Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity);
         }
     }
 
     bool GenerateMaze()
     {
-        return RecursiveBackTracking.Step(mazeDimensions);
+        bool step = RecursiveBackTracking.Step(mazeDimensions);
+        return step;
     }
 
     void Fold()

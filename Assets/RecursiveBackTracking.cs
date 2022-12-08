@@ -287,6 +287,13 @@ static public class RecursiveBackTracking
         return false;
     }
 
+    static public Vector2 DetermineCenterEnemySpawnZone(Vector2 dimensions)
+    {
+        Vector3 enemySpawn = EnemySpawnDimensions(DeterminePlayerSpawn(dimensions));
+        int center = (int)enemySpawn.y + ((int)enemySpawn.z - (int)enemySpawn.y) / 2;
+        return new Vector2(dimensions.x /2 - 1, center);
+    }
+
     static Vector3 EnemySpawnDimensions(Vector2 playerSpawn)
     {
         int lowestPointY = (int)playerSpawn.y + 7;

@@ -1237,6 +1237,8 @@ MonoBehaviour:
   puckle: {fileID: 3647834983521847569, guid: 2335ed3c55e4c224b947528ccc632efc, type: 3}
   powerPellet: {fileID: 4271793455129070055, guid: 686540e744fe67843a37528244b30f24, type: 3}
   warpTunnel: {fileID: 7990824280667740703, guid: 4054165b617536f45a69804f89faaff0, type: 3}
+  Ghosts:
+  - {fileID: 3647834983521847569, guid: 036ae08dc7967b94fb99b92106ae6a1c, type: 3}
   mazeDimensions: {x: 28, y: 31}
   startPosition: {x: -7.5, y: -6}
 --- !u!1 &536488017
