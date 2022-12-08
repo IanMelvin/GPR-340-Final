@@ -11,15 +11,21 @@ public class GhostScript : MonoBehaviour
     [SerializeField] GameObject player;
     [SerializeField] Vector3 state = Vector3.zero;
     [SerializeField] int LOS;
-    //bool startedRoutine = false;
+
+    public Vector2 mazeStartPosition;
 
     // Start is called before the first frame update
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
         state.x = 0;
-        AStarSearch search = new AStarSearch(RecursiveBackTracking.map, transform.position, player.transform.position);
-        PrintAStar(search);
+
+        Vector2 playerMazePos = new Vector2(player.transform.position.x - mazeStartPosition.x, player.transform.position.y - mazeStartPosition.y) * 2;
+        Debug.Log("Player: " + playerMazePos);
+        Vector2 enemyMazePos = new Vector2(transform.position.x - mazeStartPosition.x, transform.position.y - mazeStartPosition.y) * 2;
+
+        AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
+        PrintAStar(search, enemyMazePos, playerMazePos);
     }
 
     // Update is called once per frame
@@ -31,9 +37,36 @@ public class GhostScript : MonoBehaviour
         }*/
     }
 
-    void PrintAStar(AStarSearch search)
+    //Need to figure out how to parce through AStar, currently the goal is not a valid input to the dictionary
+    //might have to rework some of the Astar foreach loop if it turns out to be the issue
+    void PrintAStar(AStarSearch search, Vector2 start, Vector2 goal)
     {
+        Debug.Log(search.cameFrom.Count);
+        foreach(var value in search.cameFrom)
+        {
+            Debug.Log(value);
+        }
 
+        List<Vector2> Path = new List<Vector2>();
+        Vector2 next = goal;
+        Path.Add(goal);
+        while(true)
+        {
+            if ((int)search.cameFrom[next].x == (int)start.x && (int)search.cameFrom[next].y == (int)start.y)
+            {
+                break;
+            }
+
+            Path.Add(search.cameFrom[next]);
+            next = search.cameFrom[next];
+        }
+
+        for(int i = 0; i < Path.Count; i++)
+        {
+            Debug.Log(Path[i]);
+        }
+        
+        
     }
 }
 
@@ -175,8 +208,10 @@ public class AStarSearch
         while (frontier.Count > 0)
         {
             var current = frontier.Dequeue();
-            if(current.Equals(goal))
+            //Debug.Log("Current: " + current);
+            if((int)current.x == (int)goal.x && (int)current.y == (int)goal.y)
             {
+                Debug.Log("current: " + current + " goal: " + goal);
                 break;
             }
 
@@ -184,7 +219,7 @@ public class AStarSearch
             {
                 double newCost = costSoFar[current] + Cost(current, next, map);
 
-                if(!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
+                if(!costSoFar.ContainsKey(next) || newCost < costSoFar[next]) //There might be an issue with this, as vector comparisons are funky
                 {
                     costSoFar[next] = newCost;
                     double priority = newCost + Heuristic(next, goal);
