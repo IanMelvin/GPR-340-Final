@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using static RecursiveBackTracking;
 
@@ -17,8 +19,8 @@ public class GhostScript : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         state.x = 0;
 
-        PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2));
-        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2));
+        PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
+        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
 
         AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
         PrintAStar(search, enemyMazePos, playerMazePos);
@@ -27,32 +29,12 @@ public class GhostScript : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        /*if ((player.transform.position - transform.position).magnitude < 10)
-        {
 
-        }*/
     }
 
     void PrintAStar(AStarSearch search, PathNode start, PathNode goal)
     {
-        Debug.Log(search.cameFrom.Count);
-        foreach(var value in search.cameFrom)
-        {
-            Debug.Log("(" + value.Key.x + ", " + value.Key.y + ") (" + value.Value.x + ", " + value.Value.y + ")");
-        }
-
-        List<PathNode> Path = new List<PathNode>();
-        PathNode next = goal;
-        Path.Add(next);
-        if (!search.cameFrom.ContainsKey(goal))
-        {
-            Debug.Log("Error: goal is not a dictionary key");
-        }
-
-        if(!search.cameFrom.ContainsValue(goal))
-        {
-            Debug.Log("Error: goal is not a dictionary Value");
-        }
+        Debug.Log(search.endPath.Any());
 
         
         /*while(true)
@@ -158,13 +140,21 @@ public class PriorityQueue <P, T> where T : IComparable<T>
 
 public class PathNode
 {
+    private List<List<TypesOfSpaces>> map;
     private int X;
     private int Y;
 
-    public PathNode(int x, int y)
+    public int gCost;
+    public int hCost;
+    public int fCost;
+
+    public PathNode cameFromNode;
+
+    public PathNode(int x, int y, List<List<TypesOfSpaces>> map)
     {
         this.X = x;
         this.Y = y;
+        this.map = map;
     }
 
     public int x
@@ -179,9 +169,15 @@ public class PathNode
         set { Y = value; }
     }
 
+    public List<List<TypesOfSpaces>> Map
+    {
+        get { return map; }
+    }
+
+    /*
     public static PathNode operator *(PathNode a, int b)
     {
-        return new PathNode(a.x * b, a.y * b);
+        return new PathNode(a.x * b, a.y * b, a.Map);
     }
 
     public static bool operator ==(PathNode a, PathNode b)
@@ -203,6 +199,16 @@ public class PathNode
     {
         return x.GetHashCode() ^ (y.GetHashCode() << 2);
     }
+    */
+    public override string ToString()
+    {
+        return x + "," + y;
+    }
+
+    public void CalculateFCost()
+    {
+        fCost = gCost + hCost;
+    }
 
 }
 
@@ -210,6 +216,11 @@ public class AStarSearch
 {
     [SerializeField] public Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
     [SerializeField] public Dictionary<PathNode, double> costSoFar = new Dictionary<PathNode, double>();
+
+    List<PathNode> openList;
+    List<PathNode> closedList;
+    List<PathNode> grid = new List<PathNode>();
+    public List<PathNode> endPath = new List<PathNode>();
 
     static public double Heuristic(PathNode a, PathNode b)
     {
@@ -223,25 +234,25 @@ public class AStarSearch
         //North
         if (point.x < map.Count && point.y - 1 < map[0].Count && point.y - 1 >= 0 && map[(int)point.x][(int)point.y - 1] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new PathNode(point.x, point.y - 1));
+            neighbors.Add(grid[point.x * map[0].Count + (point.y - 1)]);
         }
 
         //West
         if (point.x - 1 < map.Count && point.x - 1 >= 0 && point.y < map[0].Count && map[(int)point.x - 1][(int)point.y] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new PathNode(point.x - 1, point.y));
+            neighbors.Add(grid[(point.x - 1) * map[0].Count + point.y]);
         }
 
         //east
         if (point.x + 1 < map.Count && point.x >= 0 && point.y < map[0].Count && map[(int)point.x + 1][(int)point.y] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new PathNode(point.x + 1, point.y));
+            neighbors.Add(grid[(point.x + 1) * map[0].Count + point.y]);
         }
 
         //south
         if (point.x < map.Count && point.y + 1 < map[0].Count && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] != TypesOfSpaces.Border)
         {
-            neighbors.Add(new PathNode(point.x, point.y + 1));
+            neighbors.Add(grid[(point.x * map[0].Count + (point.y + 1))]);
         }
 
         return neighbors;
@@ -252,13 +263,102 @@ public class AStarSearch
         return map[(int)b.x][(int)b.y] != TypesOfSpaces.Border ? 5 : 1;
     }
 
+    private int CalculateDistanceCost(PathNode a, PathNode b)
+    {
+        int xDistance = Mathf.Abs(a.x - b.x);
+        int yDistance = Mathf.Abs(a.y - b.y);
+
+        return xDistance + yDistance;
+    }
+
+    private void ResetGrid(PathNode start, PathNode goal)
+    {
+        for (int x = 0; x < map.Count; x++)
+        {
+            for (int y = 0; y < map[0].Count; y++)
+            {
+                if(x == start.x && y == start.y)
+                {
+                    start.gCost = int.MaxValue;
+                    start.CalculateFCost();
+                    start.cameFromNode = null;
+                    grid.Add(start);
+                    continue;
+                }
+                else if(x == goal.x && y == goal.y)
+                {
+                    goal.gCost = int.MaxValue;
+                    goal.CalculateFCost();
+                    goal.cameFromNode = null;
+                    grid.Add(goal);
+                    continue;
+                }
+                PathNode pathNode = new PathNode(x, y, map);
+                pathNode.gCost = int.MaxValue;
+                pathNode.CalculateFCost();
+                pathNode.cameFromNode = null;
+                grid.Add(pathNode);
+            }
+        }
+    }
+
     public AStarSearch(List<List<TypesOfSpaces>> map, PathNode start, PathNode goal)
     {
-        var frontier = new PriorityQueue<PathNode, double>();
-        frontier.Enqueue(start,0);
-        cameFrom[start] = start;
-        costSoFar[start] = 0;
-        while (frontier.Count > 0)
+        //var frontier = new PriorityQueue<PathNode, double>();
+        //frontier.Enqueue(start, 0);
+        
+        openList = new List<PathNode> { start };
+        closedList = new List<PathNode>();
+
+        //cameFrom[start] = start;
+        //costSoFar[start] = 0;
+
+        ResetGrid(start, goal);
+
+        start.gCost = 0;
+        start.hCost = CalculateDistanceCost(start, goal);
+        start.CalculateFCost();
+        //Debug.Log(start.gCost);
+        //Debug.Log(start.hCost);
+        //Debug.Log(start.fCost);
+
+        while(openList.Count > 0)
+        {
+            PathNode currentNode = GetLowestFCostNode(openList);
+            if(currentNode == goal)
+            {
+                Debug.Log("Over");
+                CalculatePath(goal);
+                break;
+            }
+
+            openList.Remove(currentNode);
+            closedList.Add(currentNode);
+
+            foreach(PathNode neighborNode in GetNeighbors(currentNode, map))
+            {
+                Debug.Log("Running");
+                if (closedList.Contains(neighborNode)) continue;
+
+                int tentativeGCost = currentNode.gCost + CalculateDistanceCost(currentNode, neighborNode);
+                Debug.Log((tentativeGCost < neighborNode.gCost) + " " + tentativeGCost + " " + neighborNode.gCost);
+                if(tentativeGCost < neighborNode.gCost)
+                {
+                    neighborNode.cameFromNode = currentNode;
+                    neighborNode.gCost = tentativeGCost;
+                    neighborNode.hCost = CalculateDistanceCost(neighborNode, goal);
+                    neighborNode.CalculateFCost();
+
+                    if(!openList.Contains(neighborNode))
+                    {
+                        openList.Add(neighborNode);
+                    }
+                }
+            }
+            Debug.Log(openList.Count);
+        }
+
+        /*while (frontier.Count > 0)
         {
             var current = frontier.Dequeue();
             //Debug.Log("Current: " + current);
@@ -280,8 +380,36 @@ public class AStarSearch
                     cameFrom[next] = current;
                 }
             }
-        }
+        }*/
 
         Debug.Log("Finished");
+    }
+
+    PathNode GetLowestFCostNode(List<PathNode> listOfNodes)
+    {
+        PathNode lowestFCostNode = listOfNodes[0];
+        for(int i = 1; i < listOfNodes.Count; i++)
+        {
+            if (listOfNodes[i].fCost < lowestFCostNode.fCost)
+            {
+                lowestFCostNode = listOfNodes[i];
+            }
+        }
+        return lowestFCostNode;
+    }
+
+    void CalculatePath(PathNode goal)
+    {
+        List<PathNode> path = new List<PathNode>();
+        path.Add(goal);
+        PathNode currentNode = goal;
+        while(currentNode.cameFromNode != null)
+        {
+            path.Add(currentNode.cameFromNode);
+            currentNode = currentNode.cameFromNode;
+        }
+
+        endPath = path;
+        endPath.Reverse();
     }
 }
