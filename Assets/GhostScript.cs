@@ -14,6 +14,7 @@ public class GhostScript : MonoBehaviour
 
     public Vector2 mazeStartPosition;
     List<PathNode> path = new List<PathNode>();
+    PathNode currentNode;
     int count = 0;
 
     // Start is called before the first frame update
@@ -31,7 +32,7 @@ public class GhostScript : MonoBehaviour
         
         DebugAstar(search, enemyMazePos, playerMazePos);
         StartCoroutine("Movement");
-        StartCoroutine("TimeBetweenPathUpdates");
+        //StartCoroutine("TimeBetweenPathUpdates");
     }
 
     // Update is called once per frame
@@ -49,6 +50,7 @@ public class GhostScript : MonoBehaviour
         while (count < path.Count)
         {
             Vector2 gridPoint = path[count].XY;
+            currentNode = path[count];
             gridPoint /= 2;
             transform.position = new Vector2(gridPoint.x + mazeStartPosition.x, gridPoint.y + mazeStartPosition.y);
             count++;
@@ -66,7 +68,20 @@ public class GhostScript : MonoBehaviour
             AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
             path = search.endPath;
             count = 0;
+            if (path.Contains(currentNode))
+            {
+                count = path.IndexOf(currentNode);
+            }
         }    
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.CompareTag("Player"))
+        {
+            Debug.Log("Caught");
+            Application.Quit();
+        }
     }
 }
 

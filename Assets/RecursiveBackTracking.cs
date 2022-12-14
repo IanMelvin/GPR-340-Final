@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -23,13 +24,13 @@ static public class RecursiveBackTracking
         Unknown = 5
     };
 
-    static public Vector2 StartPoint(Vector2 dimensions)
+    static public Vector2 StartPointStep(Vector2 dimensions, TypesOfSpaces startType)
     {
         for(int x = 0; x < dimensions.x / 2; x++)
         {
             for(int y = 0; y < dimensions.y; y++)
             {
-                if (map[x][y] == TypesOfSpaces.Unknown)
+                if (map[x][y] == startType)
                 {
                     return new Vector2(x,y);
                 }
@@ -38,25 +39,45 @@ static public class RecursiveBackTracking
         return new Vector2(-1,-1);
     }
 
+    static public Vector2 StartPointInsert(Vector2 dimensions, TypesOfSpaces startType)
+    {
+        for (int x = 0; x < dimensions.x / 2; x++)
+        {
+            for (int y = 0; y < dimensions.y; y++)
+            {
+                if (Check2x2(new Vector2(x,y), dimensions))
+                {
+                    return new Vector2(x, y);
+                }
+            }
+        }
+        return new Vector2(-1, -1);
+    }
+
     static public bool Step(Vector2 dimensions)
     {
         Vector2 current;
         if (stack.Count == 0)
         {
-            stack.Add(StartPoint(dimensions));
-            if (stack[0].x < 0) return false;
+            stack.Add(StartPointStep(dimensions, TypesOfSpaces.Unknown));
+            if (stack[0].x < 0)
+            {
+                stack.Clear();
+                return false;
+            }
         }
 
         current = stack[stack.Count - 1];
-        if (CheckIfMazeBorder(current, dimensions))
-        {
-            map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
-        }
+        
             
         stack.RemoveAt(stack.Count - 1);
         List<Vector2> visitables = GetVisitables(current, dimensions);
 
-        if (IsNextToEnemySpawnRange(current, dimensions))
+        if (CheckIfMazeBorder(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
+        }
+        else if (IsNextToEnemySpawnRange(current, dimensions))
         {
             switch (Random.Range(0, 2)){
                 case 0:
@@ -75,6 +96,13 @@ static public class RecursiveBackTracking
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
         }
+        else if (Check2x2(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
+            map[(int)current.x][(int)current.y + 1] = TypesOfSpaces.Border;
+            map[(int)current.x + 1][(int)current.y + 1] = TypesOfSpaces.Border;
+            map[(int)current.x + 1][(int)current.y] = TypesOfSpaces.Border;
+        }
         else if (map[(int)current.x][(int)current.y] == TypesOfSpaces.Unknown)
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
@@ -92,6 +120,25 @@ static public class RecursiveBackTracking
 
             return true;
         }
+    }
+
+    static public bool InsertObstacles(Vector2 dimensions)
+    {
+        Vector2 current;
+        if (stack.Count == 0)
+        {
+            stack.Add(StartPointInsert(dimensions, TypesOfSpaces.PuckleDibble));
+            if (stack[0].x < 0) return false;
+        }
+
+        current = stack[stack.Count - 1];
+
+        stack.RemoveAt(stack.Count - 1);
+        if (CheckIfMazeBorderNeighbor(current, dimensions))
+        {
+            //map[(int)current.x + 1][(int)current.y + 1] = TypesOfSpaces.Border;
+        }
+        return true;
     }
 
     static public void Clear(Vector2 dimensions)
@@ -245,6 +292,24 @@ static public class RecursiveBackTracking
         return false;
     }
 
+    static bool CheckIfMazeBorderNeighbor(Vector2 point, Vector2 dimensions)
+    {
+        if (point.x == 1)
+        {
+            return true;
+        }
+        else if (point.y == dimensions.y - 2)
+        {
+            return true;
+        }
+        else if (point.y == 1)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     static public Vector2 DeterminePlayerSpawn(Vector2 dimensions)
     {
         return new Vector2((int)(dimensions.x / 2) - 1, (int)(dimensions.y / 4) + 1);
@@ -351,6 +416,48 @@ static public class RecursiveBackTracking
             }
         }
 
+        return false;
+    }
+
+    static bool Check2x2(Vector2 point, Vector2 dimensions)
+    {
+        int count = 0;
+        Debug.Log("------------------");
+        Debug.Log(point);
+        Debug.Log(point.x + "," + (point.y + 1));
+        Debug.Log((point.x + 1) + "," + (point.y + 1));
+        Debug.Log((point.x + 1) + "," + point.y);
+        
+        if (point.x < dimensions.x / 2 && point.y + 1 < dimensions.y && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] == TypesOfSpaces.Unknown)
+        {
+            count++;
+        }
+        if(point.x + 1 < dimensions.x / 2 && point.x >= 0 && point.y < dimensions.y && map[(int)point.x + 1][(int)point.y] == TypesOfSpaces.Unknown)
+        {
+            count++;
+        }
+        if (point.x + 1 < dimensions.x / 2 && point.x >= 0 && point.y + 1 < dimensions.y && point.y + 1 >= 0 && map[(int)point.x + 1][(int)point.y + 1] == TypesOfSpaces.Unknown)
+        {
+            count++;
+        }
+
+        if (count == 3)
+        {
+            if(point.x + 2 < dimensions.x / 2 && point.y + 2 < dimensions.y)
+            {
+                bool neighborCheck = map[(int)point.x - 1][(int)point.y] == TypesOfSpaces.Border || map[(int)point.x][(int)point.y - 1] == TypesOfSpaces.Border;
+                bool neighborCheck1 = map[(int)point.x + 2][(int)point.y] == TypesOfSpaces.Border || map[(int)point.x + 1][(int)point.y - 1] == TypesOfSpaces.Border;
+                bool neighborCheck2 = map[(int)point.x + 2][(int)point.y + 1] == TypesOfSpaces.Border || map[(int)point.x + 1][(int)point.y + 2] == TypesOfSpaces.Border;
+                bool neighborCheck3 = map[(int)point.x][(int)point.y + 2] == TypesOfSpaces.Border || map[(int)point.x - 1][(int)point.y + 1] == TypesOfSpaces.Border;
+
+                if (neighborCheck || neighborCheck1 || neighborCheck2 || neighborCheck3)
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
         return false;
     }
 }
