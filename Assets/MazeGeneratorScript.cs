@@ -45,7 +45,7 @@ public class MazeGeneratorScript : MonoBehaviour
             FillMaze();
             Vector2 playerSpawn = RecursiveBackTracking.DeterminePlayerSpawn(mazeDimensions);
             Instantiate(puckle, new Vector3(startPosition.x + 0.5f * playerSpawn.x, startPosition.y + 0.5f * playerSpawn.y, 0.0f), Quaternion.identity);
-
+            
             Vector2 enemySpawn = RecursiveBackTracking.DetermineCenterEnemySpawnZone(mazeDimensions);
             GhostScript ghost = Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>();
             ghost.mazeStartPosition = startPosition;

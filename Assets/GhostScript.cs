@@ -62,15 +62,15 @@ public class GhostScript : MonoBehaviour
             stillFleeing = true;
         }
 
-        if(count > path.Count - 2)
+        if (count > path.Count - 2)
         {
-            if(stillFleeing)
+            if (stillFleeing)
             {
                 RunFleeSearch();
             }
             else
             {
-                RunPlayerSearch();
+                //RunPlayerSearch();
             }
         }
     }
@@ -251,27 +251,39 @@ public class AStarSearch
         List<PathNode> neighbors = new List<PathNode>();
 
         //North
-        if (point.x < map.Count && point.y - 1 < map[0].Count && point.y - 1 >= 0 && map[(int)point.x][(int)point.y - 1] != TypesOfSpaces.Border)
+        if (point.x < map.Count && point.y - 1 < map[0].Count && point.y - 1 >= 0)
         {
-            neighbors.Add(grid[point.x * map[0].Count + (point.y - 1)]);
+            if (map[(int)point.x][(int)point.y - 1] != TypesOfSpaces.Border)
+            {
+                neighbors.Add(grid[point.x * map[0].Count + (point.y - 1)]);
+            }
         }
 
         //West
-        if (point.x - 1 < map.Count && point.x - 1 >= 0 && point.y < map[0].Count && map[(int)point.x - 1][(int)point.y] != TypesOfSpaces.Border)
+        if (point.x - 1 < map.Count && point.x - 1 >= 0 && point.y < map[0].Count)
         {
-            neighbors.Add(grid[(point.x - 1) * map[0].Count + point.y]);
+            if (map[(int)point.x - 1][(int)point.y] != TypesOfSpaces.Border)
+            {
+                neighbors.Add(grid[(point.x - 1) * map[0].Count + point.y]);
+            }
         }
 
         //east
-        if (point.x + 1 < map.Count && point.x >= 0 && point.y < map[0].Count && map[(int)point.x + 1][(int)point.y] != TypesOfSpaces.Border)
+        if (point.x + 1 < map.Count && point.x >= 0 && point.y < map[0].Count)
         {
-            neighbors.Add(grid[(point.x + 1) * map[0].Count + point.y]);
+            if (map[(int)point.x + 1][(int)point.y] != TypesOfSpaces.Border)
+            {
+                neighbors.Add(grid[(point.x + 1) * map[0].Count + point.y]);
+            }
         }
 
         //south
-        if (point.x < map.Count && point.y + 1 < map[0].Count && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] != TypesOfSpaces.Border)
+        if (point.x < map.Count && point.y + 1 < map[0].Count && point.y + 1 >= 0)
         {
-            neighbors.Add(grid[(point.x * map[0].Count + (point.y + 1))]);
+            if(map[(int)point.x][(int)point.y + 1] != TypesOfSpaces.Border)
+            {
+                neighbors.Add(grid[(point.x * map[0].Count + (point.y + 1))]);
+            }
         }
 
         return neighbors;
@@ -318,6 +330,17 @@ public class AStarSearch
 
     public AStarSearch(List<List<TypesOfSpaces>> map, PathNode start, PathNode goal)
     {
+        if (map[goal.x][goal.y] == TypesOfSpaces.Border)
+        {
+            //Debug.Log("Player in Border?");
+            List<PathNode> goalNeighbors = GetNeighbors(goal, map);
+            if(goalNeighbors.Count > 0)
+            {
+                goal = goalNeighbors[0];
+            }
+
+        }
+
         openList = new List<PathNode> { start };
         closedList = new List<PathNode>();
 

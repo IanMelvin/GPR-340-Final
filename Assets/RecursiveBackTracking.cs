@@ -105,7 +105,7 @@ static public class RecursiveBackTracking
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
         }
-        else if (Check2x2(current, dimensions))
+       else if (Check2x2(current, dimensions))
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
             map[(int)current.x][(int)current.y + 1] = TypesOfSpaces.Border;
@@ -178,7 +178,7 @@ static public class RecursiveBackTracking
         if (random == 0)
         {
             //Debug.Log("false");
-            placeSecondWarpTunnel = true;
+            placeSecondWarpTunnel = false;
         }
         else
         {
@@ -520,4 +520,6 @@ static public class RecursiveBackTracking
 
         return newPos;
     }
+
+    
 }
