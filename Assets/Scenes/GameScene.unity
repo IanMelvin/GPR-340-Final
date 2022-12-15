@@ -1239,7 +1239,7 @@ MonoBehaviour:
   warpTunnel: {fileID: 7990824280667740703, guid: 4054165b617536f45a69804f89faaff0, type: 3}
   Ghosts:
   - {fileID: 3647834983521847569, guid: 036ae08dc7967b94fb99b92106ae6a1c, type: 3}
-  mazeDimensions: {x: 28, y: 31}
+  mazeDimensions: {x: 50, y: 60}
   startPosition: {x: -7.5, y: -6}
 --- !u!1 &536488017
 GameObject:

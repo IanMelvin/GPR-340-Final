@@ -129,7 +129,7 @@ public class MazeGeneratorScript : MonoBehaviour
 
         if(warpTunnelLocs.Count % 2 != 0)
         {
-            Debug.Log("Error: Odd Number of Warp Tunnels");
+            //Debug.Log("Error: Odd Number of Warp Tunnels");
         }
         else
         {
@@ -158,7 +158,7 @@ public class MazeGeneratorScript : MonoBehaviour
             genMaze = GenerateMaze();
         }
         Fold();
-        Debug.Log("generated");
+        //Debug.Log("generated");
         yield return null;
     }
 

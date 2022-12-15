@@ -79,9 +79,10 @@ public class GhostScript : MonoBehaviour
     {
         if(!search.endPath.Any())
         {
-            Debug.Log("Error: No Path Calculated");
-            Debug.Log("StartNode: " + start.ToString());
-            Debug.Log("GoalNode: " + goal.ToString());
+            RunPlayerSearch();
+            //Debug.Log("Error: No Path Calculated");
+            //Debug.Log("StartNode: " + start.ToString());
+            //Debug.Log("GoalNode: " + goal.ToString());
         }
 
     }
@@ -158,7 +159,7 @@ public class GhostScript : MonoBehaviour
 
     public void ActivateFlee()
     {
-        Debug.Log("Flee");
+        //Debug.Log("Flee");
         activateFleeState = true;
         GetComponent<SpriteRenderer>().color = fleeColor;
         StartCoroutine("FleeTimer");
