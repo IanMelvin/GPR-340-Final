@@ -17,6 +17,16 @@ public class GhostScript : MonoBehaviour
     PathNode currentNode;
     int count = 0;
 
+    private void OnEnable()
+    {
+        PuckDibleScript.powerPelletActivated += ActivateFlee;
+    }
+
+    private void OnDisable()
+    {
+        PuckDibleScript.powerPelletActivated -= ActivateFlee;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -42,7 +52,7 @@ public class GhostScript : MonoBehaviour
 
     void DebugAstar(AStarSearch search, PathNode start, PathNode goal)
     {
-        Debug.Log(search.endPath.Any());
+        //Debug.Log(search.endPath.Any());
     }
 
     IEnumerator Movement()
@@ -82,6 +92,11 @@ public class GhostScript : MonoBehaviour
             Debug.Log("Caught");
             Application.Quit();
         }
+    }
+
+    public void ActivateFlee()
+    {
+        Debug.Log("Flee");
     }
 }
 

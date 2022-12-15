@@ -18,7 +18,7 @@ public class PuckDibleScript : MonoBehaviour
 
             if(this.CompareTag("PowerPellet"))
             {
-                Debug.Log("PowerPellet");
+                //Debug.Log("PowerPellet");
                 powerPelletActivated?.Invoke();
             }
 
@@ -28,6 +28,6 @@ public class PuckDibleScript : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log(collision.ToString());
+        //Debug.Log(collision.ToString());
     }
 }
