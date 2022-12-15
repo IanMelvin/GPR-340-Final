@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,12 +13,14 @@ public class ScoreBoardManager : MonoBehaviour
     void Start()
     {
         PuckDibleScript.puckDibleAddToScore += UpdateScore;
+        GhostScript.ghostAddToScore += UpdateScore;
         text.text = "Score: " + score.ToString();
     }
 
     private void OnDisable()
     {
         PuckDibleScript.puckDibleAddToScore -= UpdateScore;
+        GhostScript.ghostAddToScore -= UpdateScore;
     }
 
     void UpdateScore(int scoreIncr)

@@ -9,6 +9,8 @@ public class PlayerScript : MonoBehaviour
     bool movementInXAxis = false;
     bool movementInYAxis = false;
 
+    Vector2 movement = Vector2.zero;
+
     private void Start()
     {
         
@@ -16,17 +18,26 @@ public class PlayerScript : MonoBehaviour
 
     private void FixedUpdate()
     {
+        CheckForNewDirection();
         UpdatePosition();
     }
 
-    private void UpdatePosition()
+    private void CheckForNewDirection()
     {
         Vector2 axisInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 
-        if ((axisInput.x > 0 || axisInput.x < 0) && !movementInYAxis)
+        if (axisInput.x > 0 && !movementInYAxis)
         {
-            transform.position = transform.position + new Vector3(axisInput.x * Time.deltaTime * speed, 0, 0);
             movementInXAxis = true;
+            movement.x = 1;
+            movement.y = 0;
+            return;
+        }
+        else if(axisInput.x < 0 && !movementInYAxis)
+        {
+            movementInXAxis = true;
+            movement.x = -1;
+            movement.y = 0;
             return;
         }
         else
@@ -34,15 +45,29 @@ public class PlayerScript : MonoBehaviour
             movementInXAxis = false;
         }
 
-        if ((axisInput.y > 0 || axisInput.y < 0) && !movementInXAxis)
+        if (axisInput.y > 0 && !movementInXAxis)
         {
-            transform.position = transform.position + new Vector3(0, axisInput.y * Time.deltaTime * speed, 0);
             movementInYAxis = true;
+            movement.y = 1;
+            movement.x = 0;
+            return;
+        }
+        else if (axisInput.y < 0 && !movementInXAxis)
+        {
+            movementInYAxis = true;
+            movement.y = -1;
+            movement.x = 0;
             return;
         }
         else
         {
             movementInYAxis = false;
         }
+    }
+
+    private void UpdatePosition()
+    {
+        transform.position += new Vector3(movement.x * Time.deltaTime * speed, movement.y * Time.deltaTime * speed, 0);
+
     }
 }

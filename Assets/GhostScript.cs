@@ -10,12 +10,22 @@ public class GhostScript : MonoBehaviour
 {
     [SerializeField] GameObject player;
     [SerializeField] Vector3 state = Vector3.zero;
-    [SerializeField] int LOS;
+    [SerializeField] Color fleeColor;
+    [SerializeField] Color[] baseColors;
+    [SerializeField] public int colorIndex;
+    [SerializeField] int scoreValue = 200;
+
+    public int timeBeforeStart = 0;
 
     public Vector2 mazeStartPosition;
+    public Vector2 ghostStartPosition;
     List<PathNode> path = new List<PathNode>();
     PathNode currentNode;
     int count = 0;
+    bool activateFleeState = false;
+    bool stillFleeing = false;
+
+    public static Action<int> ghostAddToScore;
 
     private void OnEnable()
     {
@@ -32,29 +42,57 @@ public class GhostScript : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player");
         state.x = 0;
+        GetComponent<SpriteRenderer>().color = baseColors[colorIndex];
 
-        PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
-        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
-
-        
-        AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
-        path = search.endPath;
-        
-        DebugAstar(search, enemyMazePos, playerMazePos);
-        StartCoroutine("Movement");
-        //StartCoroutine("TimeBetweenPathUpdates");
+        StartCoroutine("StartTimer");
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
+        if(activateFleeState)
+        {
+            StopCoroutine("Movement");
+            StopCoroutine("TimeBetweenPathUpdates");
+
+            RunFleeSearch();
+            StartCoroutine("Movement");
+            
+            activateFleeState = false;
+            stillFleeing = true;
+        }
+
+        if(count > path.Count - 2)
+        {
+            if(stillFleeing)
+            {
+                RunFleeSearch();
+            }
+            else
+            {
+                RunPlayerSearch();
+            }
+        }
     }
 
     void DebugAstar(AStarSearch search, PathNode start, PathNode goal)
     {
-        //Debug.Log(search.endPath.Any());
+        if(!search.endPath.Any())
+        {
+            Debug.Log("Error: No Path Calculated");
+            Debug.Log("StartNode: " + start.ToString());
+            Debug.Log("GoalNode: " + goal.ToString());
+        }
+
     }
 
+    IEnumerator StartTimer()
+    {
+        yield return new WaitForSeconds(timeBeforeStart);
+        RunPlayerSearch();
+        StartCoroutine("Movement");
+        StartCoroutine("TimeBetweenPathUpdates");
+    }
     IEnumerator Movement()
     {
         while (count < path.Count)
@@ -64,7 +102,7 @@ public class GhostScript : MonoBehaviour
             gridPoint /= 2;
             transform.position = new Vector2(gridPoint.x + mazeStartPosition.x, gridPoint.y + mazeStartPosition.y);
             count++;
-            yield return new WaitForSeconds(.75f);
+            yield return new WaitForSeconds(0.5f);
         }
         
     }
@@ -72,31 +110,79 @@ public class GhostScript : MonoBehaviour
     {
         while(player.activeSelf)
         {
-            yield return new WaitForSeconds(2.0f);
-            PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
-            PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
-            AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
-            path = search.endPath;
-            count = 0;
-            if (path.Contains(currentNode))
-            {
-                count = path.IndexOf(currentNode);
-            }
+            yield return new WaitForSeconds(5.0f);
+            RunPlayerSearch();
+            count = 1;
         }    
+    }
+    IEnumerator FleeTimer()
+    {
+        yield return new WaitForSeconds(10f);
+        StopAllCoroutines();
+        GetComponent<SpriteRenderer>().color = baseColors[colorIndex];
+
+        RunPlayerSearch();
+        StartCoroutine("Movement");
+        StartCoroutine("TimeBetweenPathUpdates");
+        Debug.Log("EndTimer");
+    }
+    IEnumerator Respawn()
+    {
+        transform.position = ghostStartPosition;
+        GetComponent<SpriteRenderer>().color = baseColors[colorIndex];
+        stillFleeing = false;
+        yield return new WaitForSeconds(10f);
+        RunPlayerSearch();
+        Debug.Log("EndRespawn");
+        StartCoroutine("Movement");
+        StartCoroutine("TimeBetweenPathUpdates");
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if(collision.gameObject.CompareTag("Player"))
         {
-            Debug.Log("Caught");
-            Application.Quit();
+            if (GetComponent<SpriteRenderer>().color == fleeColor)
+            {
+                ghostAddToScore?.Invoke(scoreValue);
+                StopAllCoroutines();
+                StartCoroutine("Respawn");
+            }
+            else 
+            {
+                Debug.Log("Caught");
+                Application.Quit();
+            }
         }
     }
 
     public void ActivateFlee()
     {
         Debug.Log("Flee");
+        activateFleeState = true;
+        GetComponent<SpriteRenderer>().color = fleeColor;
+        StartCoroutine("FleeTimer");
+    }
+
+    void RunPlayerSearch()
+    {
+        PathNode playerMazePos = new PathNode((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
+        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
+        AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, playerMazePos);
+        path = search.endPath;
+        count = 0;
+        DebugAstar(search, enemyMazePos, playerMazePos);
+    }
+
+    void RunFleeSearch()
+    {
+        Vector2 fleelocation = RecursiveBackTracking.GetPositionAwayFromPlayer(new Vector2((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2)), new Vector2((int)((player.transform.position.x - mazeStartPosition.x) * 2), (int)((player.transform.position.y - mazeStartPosition.y) * 2)));
+        PathNode FleeNode = new PathNode((int)fleelocation.x, (int)fleelocation.y, RecursiveBackTracking.map);
+        PathNode enemyMazePos = new PathNode((int)((transform.position.x - mazeStartPosition.x) * 2), (int)((transform.position.y - mazeStartPosition.y) * 2), RecursiveBackTracking.map);
+        AStarSearch search = new AStarSearch(RecursiveBackTracking.map, enemyMazePos, FleeNode);
+        path = search.endPath;
+        count = 0;
+        DebugAstar(search, enemyMazePos, FleeNode);
     }
 }
 

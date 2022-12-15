@@ -464,4 +464,60 @@ static public class RecursiveBackTracking
         }
         return false;
     }
+
+    static public Vector2 GetPositionAwayFromPlayer(Vector2 point, Vector2 playerPosition)
+    {
+        int quadLocation = 0;
+        if(playerPosition.x > map.Count / 2)
+        {
+            quadLocation += 2;
+        }
+        if(playerPosition.y > map[0].Count / 2)
+        {
+            quadLocation += 1;
+        }
+
+        Debug.Log(quadLocation);
+        return moveablePositionInAQuad(quadLocation);
+    }
+
+    static Vector2 moveablePositionInAQuad(int quad)
+    { 
+        Vector2 xRange = new Vector2();
+        Vector2 yRange = new Vector2();
+
+        switch(quad)
+        {
+            case 0:
+                xRange = new Vector2(map.Count / 2, map.Count);
+                yRange = new Vector2(map[0].Count / 2, map[0].Count);
+                break;
+            case 1:
+                xRange = new Vector2(0, map.Count / 2);
+                yRange = new Vector2(map[0].Count / 2, map[0].Count);
+                break;
+            case 2:
+                xRange = new Vector2(map.Count / 2, map.Count);
+                yRange = new Vector2(0, map[0].Count / 2);
+                break;
+            case 3:
+                xRange = new Vector2(0, map.Count / 2);
+                yRange = new Vector2(0, map[0].Count / 2);
+                break;
+            default:
+                xRange = Vector2.zero;
+                yRange = Vector2.zero;
+                break;
+        }
+
+        Vector2 newPos = new Vector2(Random.Range(xRange.x, xRange.y), Random.Range(yRange.x, yRange.y));
+
+        while (map[(int)newPos.x][(int)newPos.y] != TypesOfSpaces.PuckleDibble)
+        {
+            newPos = new Vector2(Random.Range(xRange.x, xRange.y), Random.Range(yRange.x, yRange.y));
+        }
+
+
+        return newPos;
+    }
 }

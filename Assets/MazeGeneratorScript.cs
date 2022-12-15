@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MazeGeneratorScript : MonoBehaviour
 {
@@ -16,6 +17,17 @@ public class MazeGeneratorScript : MonoBehaviour
 
     bool genMaze = true;
     bool mazeReady = false;
+    int puckleDibleCount = 0;
+
+    private void OnEnable()
+    {
+        PuckDibleScript.puckDibleAddToScore += RemoveADibble;
+    }
+
+    private void OnDisable()
+    {
+        PuckDibleScript.puckDibleAddToScore -= RemoveADibble;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -35,7 +47,34 @@ public class MazeGeneratorScript : MonoBehaviour
             Instantiate(puckle, new Vector3(startPosition.x + 0.5f * playerSpawn.x, startPosition.y + 0.5f * playerSpawn.y, 0.0f), Quaternion.identity);
 
             Vector2 enemySpawn = RecursiveBackTracking.DetermineCenterEnemySpawnZone(mazeDimensions);
-            Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>().mazeStartPosition = startPosition;
+            GhostScript ghost = Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>();
+            ghost.mazeStartPosition = startPosition;
+            ghost.ghostStartPosition = new Vector3(startPosition.x + 0.5f * enemySpawn.x, startPosition.y + 0.5f * enemySpawn.y, 0.0f);
+            ghost.colorIndex = 0;
+            ghost.timeBeforeStart = 0;
+
+            ghost = Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x - 0.5f, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>();
+            ghost.mazeStartPosition = startPosition;
+            ghost.ghostStartPosition = new Vector3(startPosition.x + 0.5f * enemySpawn.x - 0.5f, startPosition.y + 0.5f * enemySpawn.y, 0.0f);
+            ghost.colorIndex = 1;
+            ghost.timeBeforeStart = 5;
+
+            ghost = Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x + 0.5f, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>();
+            ghost.mazeStartPosition = startPosition;
+            ghost.ghostStartPosition = new Vector3(startPosition.x + 0.5f * enemySpawn.x + 0.5f, startPosition.y + 0.5f * enemySpawn.y, 0.0f);
+            ghost.colorIndex = 2;
+            ghost.timeBeforeStart = 10;
+
+            ghost = Instantiate(Ghosts[0], new Vector3(startPosition.x + 0.5f * enemySpawn.x + 1.0f, startPosition.y + 0.5f * enemySpawn.y, 0.0f), Quaternion.identity).GetComponent<GhostScript>();
+            ghost.mazeStartPosition = startPosition;
+            ghost.ghostStartPosition = new Vector3(startPosition.x + 0.5f * enemySpawn.x + 1.0f, startPosition.y + 0.5f * enemySpawn.y, 0.0f);
+            ghost.colorIndex = 3;
+            ghost.timeBeforeStart = 15;
+        }
+
+        if(mazeReady && puckleDibleCount <= 0)
+        {
+            Reset();
         }
     }
 
@@ -68,6 +107,7 @@ public class MazeGeneratorScript : MonoBehaviour
                 else if (map[x][y] == RecursiveBackTracking.TypesOfSpaces.PuckleDibble)
                 {
                     maze[x].Add(Instantiate(puckleDible, new Vector3(startPosition.x + 0.5f * x, startPosition.y + 0.5f * y, 0.0f), Quaternion.identity));
+                    puckleDibleCount++;
                 }
                 else if(map[x][y] == RecursiveBackTracking.TypesOfSpaces.PowerPellet)
                 {
@@ -120,5 +160,16 @@ public class MazeGeneratorScript : MonoBehaviour
         Fold();
         Debug.Log("generated");
         yield return null;
+    }
+
+    private void Reset()
+    {
+        SceneManager.LoadScene("GameScene");
+    }
+
+    public void RemoveADibble(int value)
+    {
+        puckleDibleCount--;
+        //Debug.Log(puckleDibleCount);
     }
 }
