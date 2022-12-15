@@ -11,6 +11,7 @@ static public class RecursiveBackTracking
 
     //Warp Tunnel Values
     static bool placeSecondWarpTunnel = false;
+    static int powerPelletLoc = 0;
     static int warpTunnelRange = 0; //Determines how many spaces in line with the warp tunnel should be empty 
     static List<int> warpTunnels = new List<int>(); //stores the y value of warp tunnels
     static List<Vector3> wtBorderThickness = new List<Vector3>(); //stores the values representing how the border shifts near the Warp Tunnel(s)
@@ -88,6 +89,10 @@ static public class RecursiveBackTracking
                     break;
             }
         }
+        else if(IsPowerPelletLoc(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.PowerPellet;
+        }
         else if(IsInWarpTunnelXRange(current, dimensions))
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Empty;
@@ -95,6 +100,10 @@ static public class RecursiveBackTracking
         else if(IsInWarpTunnelBorderRange(current, dimensions))
         {
             map[(int)current.x][(int)current.y] = TypesOfSpaces.Border;
+        }
+        else if(CheckIfMazeBorderNeighbor(current, dimensions))
+        {
+            map[(int)current.x][(int)current.y] = TypesOfSpaces.PuckleDibble;
         }
         else if (Check2x2(current, dimensions))
         {
@@ -122,29 +131,12 @@ static public class RecursiveBackTracking
         }
     }
 
-    static public bool InsertObstacles(Vector2 dimensions)
-    {
-        Vector2 current;
-        if (stack.Count == 0)
-        {
-            stack.Add(StartPointInsert(dimensions, TypesOfSpaces.PuckleDibble));
-            if (stack[0].x < 0) return false;
-        }
-
-        current = stack[stack.Count - 1];
-
-        stack.RemoveAt(stack.Count - 1);
-        if (CheckIfMazeBorderNeighbor(current, dimensions))
-        {
-            //map[(int)current.x + 1][(int)current.y + 1] = TypesOfSpaces.Border;
-        }
-        return true;
-    }
-
     static public void Clear(Vector2 dimensions)
     {
         stack.Clear();
         map.Clear();
+        warpTunnels.Clear();
+        wtBorderThickness.Clear();
 
         for(int x = 0; x < dimensions.x; x++)
         {
@@ -158,6 +150,7 @@ static public class RecursiveBackTracking
         ResetToDefaults(dimensions);
         PlaceWarpTunnels(dimensions);
         CalcWarpTunnelValues();
+        powerPelletLoc = Random.Range(1, 4);
     }
 
     static void ResetToDefaults(Vector2 dimensions)
@@ -422,11 +415,6 @@ static public class RecursiveBackTracking
     static bool Check2x2(Vector2 point, Vector2 dimensions)
     {
         int count = 0;
-        Debug.Log("------------------");
-        Debug.Log(point);
-        Debug.Log(point.x + "," + (point.y + 1));
-        Debug.Log((point.x + 1) + "," + (point.y + 1));
-        Debug.Log((point.x + 1) + "," + point.y);
         
         if (point.x < dimensions.x / 2 && point.y + 1 < dimensions.y && point.y + 1 >= 0 && map[(int)point.x][(int)point.y + 1] == TypesOfSpaces.Unknown)
         {
@@ -449,13 +437,29 @@ static public class RecursiveBackTracking
                 bool neighborCheck1 = map[(int)point.x + 2][(int)point.y] == TypesOfSpaces.Border || map[(int)point.x + 1][(int)point.y - 1] == TypesOfSpaces.Border;
                 bool neighborCheck2 = map[(int)point.x + 2][(int)point.y + 1] == TypesOfSpaces.Border || map[(int)point.x + 1][(int)point.y + 2] == TypesOfSpaces.Border;
                 bool neighborCheck3 = map[(int)point.x][(int)point.y + 2] == TypesOfSpaces.Border || map[(int)point.x - 1][(int)point.y + 1] == TypesOfSpaces.Border;
+                bool neighborCheck4 = map[(int)point.x - 1][(int)point.y - 1] == TypesOfSpaces.Border || map[(int)point.x + 2][(int)point.y - 1] == TypesOfSpaces.Border;
+                bool neighborCheck5 = map[(int)point.x - 1][(int)point.y + 2] == TypesOfSpaces.Border || map[(int)point.x + 2][(int)point.y + 2] == TypesOfSpaces.Border;
 
-                if (neighborCheck || neighborCheck1 || neighborCheck2 || neighborCheck3)
+                if (neighborCheck || neighborCheck1 || neighborCheck2 || neighborCheck3 || neighborCheck4 || neighborCheck5)
                 {
                     return false;
                 }
+
+                return true;
             }
-            
+
+            if (point.x + 1 < dimensions.x / 2 && point.y + 1 < dimensions.y)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static bool IsPowerPelletLoc(Vector2 point, Vector2 dimensions)
+    {
+        if(point.x == 1 && (point.y == powerPelletLoc || point.y == dimensions.y - powerPelletLoc - 1))
+        {
             return true;
         }
         return false;
